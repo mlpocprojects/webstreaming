@@ -14,3 +14,5 @@ In the root directory. After the modules have been installed you can run the pro
 	
 Open http://localhost:8000 in a browser.you can open multiple tabs as this application support multi 
 threading architecture.
+
+**Note : Do not use dockefile cause work is still in progress**
