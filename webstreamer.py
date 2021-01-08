@@ -1,3 +1,8 @@
+from keras.preprocessing import image
+from keras.applications.vgg16 import preprocess_input, decode_predictions
+import numpy as np
+from models.model import load_pre_trained_model
+import os
 from imutils.video import VideoStream
 from flask import Response
 from flask import Flask
@@ -13,6 +18,12 @@ import cv2
 # are viewing the stream)
 outputFrame = None
 lock = threading.Lock()
+
+# Load the model
+BASE_DIR = os.getcwd()
+model_path = os.path.join(BASE_DIR, 'models/weights/vgg16_weights_tf_dim_ordering_tf_kernels.h5')
+trained_model = load_pre_trained_model(model_path=model_path)
+
 # initialize a flask object
 app = Flask(__name__)
 # initialize the video stream and allow the camera sensor to warm up
@@ -37,12 +48,21 @@ def web_stream():
         # read the next frame from the video stream, resize it,
         # convert the frame to grayscale, and blur it
         frame = vs.read()
-        frame = imutils.resize(frame, width=480)
-        # grab the current timestamp and draw it on the frame
-        timestamp = datetime.datetime.now()
-        cv2.putText(frame, timestamp.strftime(
-            "%A %d %B %Y %I:%M:%S%p"), (10, frame.shape[0] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+        resized_frame = cv2.resize(frame, (224, 224))
+        # apply the model
+        # convert image to array
+        x = image.img_to_array(resized_frame)
+        x = np.expand_dims(x, axis=0)
+        x = preprocess_input(x)
+
+        # predict class for image
+        top_pred = trained_model.predict(x)
+        # print('Result:', decode_predictions(top_pred, top=1)[0])
+        results = decode_predictions(top_pred, top=1)[0]
+        label = results[0][1]
+        # print(label)
+        cv2.putText(frame, label, (10, frame.shape[0] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
 
         # acquire the lock, set the output frame, and release the
         # lock
@@ -62,7 +82,8 @@ def generate():
             if outputFrame is None:
                 continue
             # encode the frame in JPEG format
-            (flag, encodedImage) = cv2.imencode(".jpg", outputFrame)
+            output_resize = imutils.resize(outputFrame, width=680, height=680)
+            (flag, encodedImage) = cv2.imencode(".jpg", output_resize)
             # ensure the frame was successfully encoded
             if not flag:
                 continue
