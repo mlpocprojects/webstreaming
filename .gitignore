@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 
 .idea/
+
+# ignore the trained model file
+/models/weights/
