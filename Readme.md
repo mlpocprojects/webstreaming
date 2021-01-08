@@ -1,6 +1,6 @@
 # web streaming
 
-This repository contains a demonstration of video streaming over API using flask framwork
+This repository contains a demonstration of video streaming over API using flask framework
 
 ## How to use
 
@@ -8,7 +8,7 @@ To install all the requirements for the project run
 
 	pip install -r requirements.txt
 
-Now download the model required to run the VGG16 net.
+Now download the model required to run the VGG16 net **(IMPORTANT)**.
     
      https://storage.googleapis.com/tensorflow/keras-applications/vgg16/vgg16_weights_tf_dim_ordering_tf_kernels.h5
      
