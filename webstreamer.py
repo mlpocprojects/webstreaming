@@ -1,14 +1,14 @@
-from keras.preprocessing import image
-from keras.applications.vgg16 import preprocess_input, decode_predictions
-import numpy as np
-from models.model import load_pre_trained_model
 import os
+import tensorflow as tf
 from imutils.video import VideoStream
 from flask import Response
 from flask import Flask
 from flask import render_template
 import threading
-import datetime
+from absl import logging
+from resources.models.dataset import transform_images
+from resources.models.recogntion import load_pre_trained_model_classes
+from resources.models.utils import draw_outputs
 import imutils
 import time
 import cv2
@@ -16,13 +16,13 @@ import cv2
 # initialize the output frame and a lock used to ensure thread-safe
 # exchanges of the output frames (useful when multiple browsers/tabs
 # are viewing the stream)
+
 outputFrame = None
 lock = threading.Lock()
 
-# Load the model
+# Load the model and classes
 BASE_DIR = os.getcwd()
-model_path = os.path.join(BASE_DIR, 'models/weights/vgg16_weights_tf_dim_ordering_tf_kernels.h5')
-trained_model = load_pre_trained_model(model_path=model_path)
+classes_names, yolo = load_pre_trained_model_classes()
 
 # initialize a flask object
 app = Flask(__name__)
@@ -43,26 +43,32 @@ def web_stream():
     # lock variables
     global vs, outputFrame, lock
 
+    times = []
+
     # loop over frames from the video stream
     while True:
         # read the next frame from the video stream, resize it,
         # convert the frame to grayscale, and blur it
         frame = vs.read()
-        resized_frame = cv2.resize(frame, (224, 224))
-        # apply the model
-        # convert image to array
-        x = image.img_to_array(resized_frame)
-        x = np.expand_dims(x, axis=0)
-        x = preprocess_input(x)
 
-        # predict class for image
-        top_pred = trained_model.predict(x)
-        # print('Result:', decode_predictions(top_pred, top=1)[0])
-        results = decode_predictions(top_pred, top=1)[0]
-        label = results[0][1]
-        # print(label)
-        cv2.putText(frame, label, (10, frame.shape[0] - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 2)
+        if frame is None:
+            logging.warning("Empty Frame")
+            time.sleep(0.1)
+            continue
+        img_in = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        img_in = tf.expand_dims(img_in, 0)
+        img_in = transform_images(img_in, 416)
+
+        # apply the model
+        t1 = time.time()
+        boxes, scores, classes, nums = yolo.predict(img_in)
+        t2 = time.time()
+        times.append(t2 - t1)
+        times = times[-20:]
+
+        frame = draw_outputs(frame, (boxes, scores, classes, nums), classes_names)
+        frame = cv2.putText(frame, "Time: {:.2f}ms".format(sum(times) / len(times) * 1000), (0, 30),
+                            cv2.FONT_HERSHEY_COMPLEX_SMALL, 1, (0, 0, 255), 2)
 
         # acquire the lock, set the output frame, and release the
         # lock
