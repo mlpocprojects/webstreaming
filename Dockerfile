@@ -1,9 +1,9 @@
-FROM python:3.6
+FROM tensorflow/tensorflow:2.1.0-py3
 
 # Set the virtualenv path to bin:
-ENV VIRTUAL_ENV=/opt/venv
-RUN python3 -m venv $VIRTUAL_ENV
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+#ENV VIRTUAL_ENV=/opt/venv
+#RUN python -m venv $VIRTUAL_ENV
+#ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Set the Workdir:
 WORKDIR /usr/src/app
@@ -14,4 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application:
 COPY . .
-CMD ["python", "webstreamer.py"]
+CMD ["python3", "webstreamer.py"]
