@@ -8,7 +8,7 @@ To install all the requirements for the project run
 
 	pip install -r requirements.txt
 
-Now run the weights_converter.py file **(IMPORTANT)**.
+Now run the weights_converter.py file **(IMPORTANT: ONLY RUN THIS FILE ONCE)**.
     
     python weights_converter.py
      
