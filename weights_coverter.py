@@ -4,25 +4,32 @@ import numpy as np
 from resources.models.yolov3_tiny import YoloV3Tiny
 from resources.models.utils import load_darknet_weights
 import requests
-import pickle
+
 # Downloading weights from URL
 weights = requests.get("https://pjreddie.com/media/files/yolov3-tiny.weights")
 base_dir = os.getcwd()
+weights_folder_path = os.path.join(base_dir, 'data/yolo_tiny/weights/')
+
+
 # Checking if folder is created, if no than flash error
+
 def create_folder(directory):
     try:
         if not os.path.exists(directory):
+            print(":creating folder")
             os.makedirs(directory)
+        else:
+            print('path exists')
 
     except:
         print('Error: Creating weights directory' + directory)
-create_folder(base_dir+'/weights/')
-# Changing directory to add weights file to the directory
-os.chdir(base_dir+'/weights/')
-with open("yolov3-tiny.weights",'wb') as pickle_file:
-    pickle.dump(weights, pickle_file)
-# Returning to the base directory
-os.chdir(base_dir)
+
+
+create_folder(weights_folder_path)
+# Add weights file to the directory
+with open(weights_folder_path + "yolov3-tiny.weights", 'wb') as pickle_file:
+    pickle_file.write(weights.content)
+
 initial_weights_file_path = os.path.join(base_dir, 'data/yolo_tiny/weights/yolov3-tiny.weights')
 converted_weights_file_path = os.path.join(base_dir, 'data/yolo_tiny/weights/yolov3-tiny.tf')
 
